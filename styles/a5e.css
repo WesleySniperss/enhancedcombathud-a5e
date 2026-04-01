@@ -1,0 +1,22 @@
+/* Argon Combat HUD — A5E */
+
+/* Прибираємо зайві елементи руху */
+.movement-max { display: none !important; }
+.movement-hud img,
+.movement-hud i,
+.movement-hud svg { display: none !important; }
+
+/* Єдиний колір для всього HUD — тільки реальні елементи */
+body.game .portrait-hud,
+body.game .movement-hud:not(.hidden),
+body.game .action-element.ech-blur {
+    background-color: rgba(65, 75, 85, 0.9) !important;
+}
+
+body.game .action-element.ech-blur.bonus-action {
+    background-color: rgba(69, 59, 117, 0.9) !important;
+}
+
+body.game .action-element.ech-blur.end-turn {
+    background-color: rgba(55, 75, 60, 0.9) !important;
+}

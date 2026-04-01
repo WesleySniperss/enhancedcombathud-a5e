@@ -1,0 +1,38 @@
+{
+    "enhancedcombathud-a5e": {
+        "settings": {
+            "drawerFontSize": {
+                "name": "Drawer Font Size",
+                "hint": "Font size of the Skills/Saves panel (10-22px). Width scales automatically."
+            }
+        },
+        "hud": {
+            "action":      { "name": "Action" },
+            "bonusAction": { "name": "Bonus Action" },
+            "reaction":    { "name": "Reaction" },
+            "freeAction":  { "name": "Free Action" },
+            "castSpell":   { "name": "Cast Spell" },
+            "useFeature":  { "name": "Use Feature" },
+            "useItem":     { "name": "Use Item" },
+            "useManeuver": { "name": "Use Maneuver" },
+            "longRest":    { "name": "Long Rest" },
+            "shortRest":   { "name": "Short Rest" },
+            "saves":       { "name": "Saves" },
+            "skills":      { "name": "Skills" },
+            "spells": {
+                "cantrip": "Cantrips",
+                "level":   "Level"
+            },
+            "maneuver": {
+                "degree": "Degree"
+            }
+        },
+        "tooltip": {
+            "range":      { "name": "Range" },
+            "target":     { "name": "Target" },
+            "damage":     { "name": "Damage" },
+            "exertion":   { "name": "Exertion" },
+            "properties": { "name": "Properties" }
+        }
+    }
+}
