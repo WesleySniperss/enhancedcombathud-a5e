@@ -11,5 +11,8 @@
     "system": ["a5e"],
     "esmodules": ["scripts/main.mjs"],
     "styles":    ["styles/a5e.css"],
-    "languages": [{ "lang": "en", "name": "English", "path": "languages/en.json" }]
+    "languages": [{ "lang": "en", "name": "English", "path": "languages/en.json" }],
+    "url": "https://github.com/WesleySniperss/enhancedcombathud-a5e",
+    "manifest": "https://raw.githubusercontent.com/WesleySniperss/enhancedcombathud-a5e/main/module.json",
+    "download": "https://github.com/WesleySniperss/enhancedcombathud-a5e/releases/download/v1.2.0/enhancedcombathud-a5e-v1.2.0.zip"
 }
