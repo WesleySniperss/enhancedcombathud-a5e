@@ -65,11 +65,14 @@ export function initConfig() {
 
         // A5E: зброя — це item.type === "object" з objectType === "weapon"
         // Для HUD показуємо тільки consumable з об'єктів (зілля, розхідники)
+        // equippedState: 0=NOT_CARRIED, 1=CARRIED, 2=EQUIPPED
         const itemGroups = [
-            { type: "weapon",   filter: i => i.type === "object" && i.system.objectType === "weapon" },
+            { type: "weapon",   filter: i => i.type === "object" && i.system.objectType === "weapon"
+                                           && !i.system.containerId && (i.system.equippedState ?? 0) >= 1 },
             { type: "spell",    filter: i => i.type === "spell" },
             { type: "feature",  filter: i => i.type === "feature" },
-            { type: "object",   filter: i => i.type === "object" && i.system.objectType === "consumable" },
+            { type: "object",   filter: i => i.type === "object" && i.system.objectType === "consumable"
+                                           && !i.system.containerId },
             { type: "maneuver", filter: i => i.type === "maneuver" },
         ];
 
