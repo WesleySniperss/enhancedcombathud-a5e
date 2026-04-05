@@ -1,4 +1,4 @@
-import { MODULE_ID } from "./main.mjs";
+// a5e.mjs — A5E bridge for Argon Combat HUD
 
 // ─── Утиліти ──────────────────────────────────────────────────────────────────
 
@@ -8,6 +8,7 @@ const getActivationType = (item) => {
     const first = Object.values(actions)[0];
     return first?.activation?.type ?? null;
 };
+
 
 function getDamageTypeIcon(damageType) {
     switch ((damageType ?? "").toLowerCase()) {
@@ -42,10 +43,13 @@ function addSign(val) { return val >= 0 ? `+${val}` : `${val}`; }
 
 export function initConfig() {
 
-    Hooks.on("updateItem", (item) => {
+    const refreshHud = (item) => {
         if (item.parent === ui.ARGON?._actor && ui.ARGON?.rendered)
-            ui.ARGON.components.portrait.refresh();
-    });
+            ui.ARGON.refresh();
+    };
+    Hooks.on("updateItem", refreshHud);
+    Hooks.on("createItem", refreshHud);
+    Hooks.on("deleteItem", refreshHud);
 
     Hooks.on("argonInit", (CoreHUD) => {
         if (game.system.id !== "a5e") return;
@@ -53,19 +57,21 @@ export function initConfig() {
         const ARGON = CoreHUD.ARGON;
 
         const actionTypes = {
-            action:   ["action", ""],
+            action:   ["action", "", null],
             bonus:    ["bonusAction"],
             reaction: ["reaction"],
-            free:     ["free"],
+            free:     ["none", "special"],
         };
 
-        const itemTypes = {
-            weapon:   ["weapon"],
-            spell:    ["spell"],
-            feature:  ["feature"],
-            object:   ["object"],
-            maneuver: ["maneuver"],
-        };
+        // A5E: зброя — це item.type === "object" з objectType === "weapon"
+        // Для HUD показуємо тільки consumable з об'єктів (зілля, розхідники)
+        const itemGroups = [
+            { type: "weapon",   filter: i => i.type === "object" && i.system.objectType === "weapon" },
+            { type: "spell",    filter: i => i.type === "spell" },
+            { type: "feature",  filter: i => i.type === "feature" },
+            { type: "object",   filter: i => i.type === "object" && i.system.objectType === "consumable" },
+            { type: "maneuver", filter: i => i.type === "maneuver" },
+        ];
 
         // ── Tooltip ───────────────────────────────────────────────────────────
         async function getTooltipDetails(item) {
@@ -215,6 +221,10 @@ export function initConfig() {
 
         // ── Item Button ───────────────────────────────────────────────────────
         class A5eItemButton extends ARGON.MAIN.BUTTONS.ItemButton {
+            constructor({ item, activations = null }) {
+                super({ item });
+                this._activations = activations;
+            }
             get hasTooltip() { return true; }
             get ranges()  {
                 const r = this.item?.system?.range;
@@ -228,7 +238,6 @@ export function initConfig() {
             }
             get quantity() {
                 if (!this.item) return null;
-                // A5E: uses живе і на рівні item, і в actions[id].uses
                 const uses = this.item.system.uses;
                 if (uses?.max) return uses.max - (uses.value ?? 0);
                 const firstAction = Object.values(this.item.system.actions ?? {})[0];
@@ -241,10 +250,21 @@ export function initConfig() {
 
             async _onLeftClick(event) {
                 ui.ARGON.interceptNextDialog(event.currentTarget);
-                const used = await (this.item.activate?.({ event }) ?? this.item.use?.({ event }));
-                if (used) A5eItemButton.consumeActionEconomy(this.item);
+                // Знаходимо дії що відповідають панелі (action/bonus/reaction/free)
+                const matching = this._activations
+                    ? Object.entries(this.item.system.actions ?? {})
+                        .filter(([, a]) => this._activations.includes(a?.activation?.type ?? null))
+                    : null;
+                if (matching?.length === 1) {
+                    // Одна дія — активуємо напряму без діалогу вибору
+                    await this.item.activate?.(matching[0][0]);
+                } else {
+                    // Кілька або не відомо — нехай A5E покаже свій діалог
+                    await this.item.activate?.();
+                }
+                A5eItemButton.consumeActionEconomy(this.item);
             }
-            async _onRightClick(event) { this.item?.sheet?.render(true); }
+            async _onRightClick(_event) { this.item?.sheet?.render(true); }
 
             static consumeActionEconomy(item) {
                 const act = getActivationType(item);
@@ -259,8 +279,8 @@ export function initConfig() {
 
         // ── Button Panel Button ───────────────────────────────────────────────
         class A5eButtonPanelButton extends ARGON.MAIN.BUTTONS.ButtonPanelButton {
-            constructor({ type, items, color, actionType = null }) {
-                super(); this.type = type; this.items = items; this.color = color; this.actionType = actionType;
+            constructor({ type, items, color, actionType = null, activations = null }) {
+                super(); this.type = type; this.items = items; this.color = color; this.actionType = actionType; this._activations = activations;
             }
             get hasContents()  { return this.items.length > 0; }
             get colorScheme()  { return this.color; }
@@ -302,6 +322,8 @@ export function initConfig() {
                 const AccCat   = ARGON.MAIN.BUTTON_PANELS.ACCORDION.AccordionPanelCategory;
                 const BtnPanel = ARGON.MAIN.BUTTON_PANELS.ButtonPanel;
 
+                const mkBtn = (i) => new A5eItemButton({ item: i, activations: this._activations });
+
                 if (this.type === "spell") {
                     const cantrips = this.items.filter(i => i.system?.level === 0);
                     const byLevel  = {};
@@ -313,13 +335,12 @@ export function initConfig() {
                     const cats = [];
                     if (cantrips.length)
                         cats.push(new AccCat({ label: game.i18n.localize("enhancedcombathud-a5e.hud.spells.cantrip"),
-                                               buttons: cantrips.map(i => new A5eItemButton({ item: i })),
+                                               buttons: cantrips.map(mkBtn),
                                                uses: { max: Infinity, value: Infinity } }));
                     for (const [lvl, items] of Object.entries(byLevel).sort((a,b) => +a[0]-+b[0])) {
-                        const level = lvl; // захоплюємо значення в замиканні
+                        const level = lvl;
                         cats.push(new AccCat({ label: `${game.i18n.localize("enhancedcombathud-a5e.hud.spells.level")} ${lvl}`,
-                                               buttons: items.map(i => new A5eItemButton({ item: i })),
-                                               // Функція читає слоти КОЖНОГО РАЗУ з актора — реактивно
+                                               buttons: items.map(mkBtn),
                                                uses: () => {
                                                    const s = this.actor.system.spellResources?.slots?.[level] ?? { current: 0, max: 0 };
                                                    return { value: s.current, max: s.max };
@@ -334,13 +355,12 @@ export function initConfig() {
                     const degrees = Object.keys(byDeg).map(Number);
                     const allZero = degrees.every(d => d === 0);
                     if (allZero || degrees.length === 1) {
-                        return new BtnPanel({ id: this.id, buttons: this.items.map(i => new A5eItemButton({ item: i })) });
+                        return new BtnPanel({ id: this.id, buttons: this.items.map(mkBtn) });
                     }
                     const cats = Object.entries(byDeg).sort((a,b) => +a[0]-+b[0])
                         .map(([d, items]) => new AccCat({
                             label: `${game.i18n.localize("enhancedcombathud-a5e.hud.maneuver.degree")} ${d}`,
-                            buttons: items.map(i => new A5eItemButton({ item: i })),
-                            // Реактивно читаємо exertion кожного разу
+                            buttons: items.map(mkBtn),
                             uses: () => {
                                 const ex = this.actor.system.exertion ?? { current: 0, max: 0 };
                                 return { value: ex.current, max: ex.max };
@@ -348,18 +368,30 @@ export function initConfig() {
                     return new AccPanel({ id: this.id, accordionPanelCategories: cats });
                 }
 
-                return new BtnPanel({ id: this.id, buttons: this.items.map(i => new A5eItemButton({ item: i })) });
+                return new BtnPanel({ id: this.id, buttons: this.items.map(mkBtn) });
             }
         }
 
         // ── Action Panels ─────────────────────────────────────────────────────
-        function buildButtons(actor, activations, color, weaponSet = null, panelType = null) {
+        // Повертає true якщо ПЕРША дія айтема відповідає переліку (для розміщення в панелі)
+        function matchesPanelActivation(item, activations) {
+            return activations.includes(getActivationType(item));
+        }
+
+        function buildButtons(actor, activations, color, _weaponSet = null, panelType = null) {
             const buttons = [];
-            // Weapon sets вимкнені — в A5E вони не потрібні
-            for (const [type, types] of Object.entries(itemTypes)) {
-                const items = actor.items.filter(i => types.includes(i.type) && activations.includes(getActivationType(i)));
+            for (const { type, filter } of itemGroups) {
+                const items = actor.items.filter(i => {
+                    if (!filter(i)) return false;
+                    // Для consumable: вимагаємо явний тип дії (не null) щоб не показувати їжу/раціони
+                    if (type === "object") {
+                        const act = getActivationType(i);
+                        return act && activations.includes(act);
+                    }
+                    return matchesPanelActivation(i, activations);
+                });
                 if (!items.length) continue;
-                const btn = new A5eButtonPanelButton({ type, items, color, actionType: panelType });
+                const btn = new A5eButtonPanelButton({ type, items, color, actionType: panelType, activations });
                 if (btn.hasContents) buttons.push(btn);
             }
             return buttons;
@@ -436,40 +468,6 @@ export function initConfig() {
             }
         }
 
-        // ── Weapon Sets ───────────────────────────────────────────────────────
-        class A5eWeaponSets extends ARGON.WeaponSets {
-            async getDefaultSets() {
-                const base = await super.getDefaultSets();
-                if (this.actor.type !== "npc") return base;
-                const w = this.actor.items.filter(i => i.type === "weapon");
-                return {
-                    1: { primary: w[0]?.uuid ?? null, secondary: w[1]?.uuid ?? null },
-                    2: { primary: w[2]?.uuid ?? null, secondary: w[3]?.uuid ?? null },
-                    3: { primary: w[4]?.uuid ?? null, secondary: w[5]?.uuid ?? null },
-                };
-            }
-            async _getSets() {
-                const sets = foundry.utils.mergeObject(
-                    await this.getDefaultSets(),
-                    foundry.utils.deepClone(this.actor.getFlag("enhancedcombathud", "weaponSets") || {})
-                );
-                for (const slots of Object.values(sets)) {
-                    slots.primary   = slots.primary   ? await fromUuid(slots.primary)   : null;
-                    slots.secondary = slots.secondary ? await fromUuid(slots.secondary) : null;
-                }
-                return sets;
-            }
-            async _onSetChange({ sets, active }) {
-                const updates = [];
-                const activeItems   = Object.values(sets[active]).filter(Boolean);
-                const inactiveItems = Object.values(sets).filter(s => s !== sets[active])
-                    .flatMap(s => Object.values(s)).filter(Boolean).filter(i => !activeItems.includes(i));
-                activeItems.forEach(i   => { if (!i.system?.equipped) updates.push({ _id: i.id, "system.equipped": true });  });
-                inactiveItems.forEach(i => { if (i.system?.equipped)  updates.push({ _id: i.id, "system.equipped": false }); });
-                if (updates.length) await this.actor.updateEmbeddedDocuments("Item", updates);
-            }
-        }
-
         // ── Реєстрація ────────────────────────────────────────────────────────
         CoreHUD.definePortraitPanel(A5ePortraitPanel);
         CoreHUD.defineDrawerPanel(A5eDrawerPanel);
@@ -482,7 +480,7 @@ export function initConfig() {
             get slots()            { return []; }
             async _getSets()       { return {}; }
             async getDefaultSets() { return {}; }
-            async render(...args)  { return; }
+            async render()         { return; }
         }
         CoreHUD.defineWeaponSets(A5eEmptyWeaponSets);
         CoreHUD.defineSupportedActorTypes(["character", "npc"]);
