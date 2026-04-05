@@ -11,6 +11,7 @@
             "bonusAction": { "name": "Bonus Action" },
             "reaction":    { "name": "Reaction" },
             "freeAction":  { "name": "Free Action" },
+            "useWeapon":   { "name": "Attack" },
             "castSpell":   { "name": "Cast Spell" },
             "useFeature":  { "name": "Use Feature" },
             "useItem":     { "name": "Use Item" },

@@ -60,6 +60,7 @@ export function initConfig() {
         };
 
         const itemTypes = {
+            weapon:   ["weapon"],
             spell:    ["spell"],
             feature:  ["feature"],
             object:   ["object"],
@@ -266,13 +267,14 @@ export function initConfig() {
             get id()           { return `${this.type}-${this.color}`; }
             get label() {
                 const base = {
+                    weapon:   "enhancedcombathud-a5e.hud.useWeapon.name",
                     spell:    "enhancedcombathud-a5e.hud.castSpell.name",
                     feature:  "enhancedcombathud-a5e.hud.useFeature.name",
                     object:   "enhancedcombathud-a5e.hud.useItem.name",
                     maneuver: "enhancedcombathud-a5e.hud.useManeuver.name",
                 }[this.type];
                 // Для feature/object додаємо тип дії в дужках щоб уникнути дублікатів
-                if (this.actionType && ["feature", "object"].includes(this.type)) {
+                if (this.actionType && ["weapon", "feature", "object"].includes(this.type)) {
                     const suffix = {
                         action:      "(Action)",
                         bonusAction: "(Bonus)",
@@ -288,10 +290,11 @@ export function initConfig() {
                 return base;
             }
             get icon() {
-                return { spell: "modules/enhancedcombathud/icons/spell-book.webp",
+                return { weapon:  "modules/enhancedcombathud/icons/crossed-swords.webp",
+                         spell:   "modules/enhancedcombathud/icons/spell-book.webp",
                          feature: "modules/enhancedcombathud/icons/mighty-force.webp",
-                         object: "modules/enhancedcombathud/icons/drink-me.webp",
-                         maneuver: "modules/enhancedcombathud/icons/mighty-force.webp" }[this.type];
+                         object:  "modules/enhancedcombathud/icons/drink-me.webp",
+                         maneuver:"modules/enhancedcombathud/icons/mighty-force.webp" }[this.type];
             }
 
             async _getPanel() {
