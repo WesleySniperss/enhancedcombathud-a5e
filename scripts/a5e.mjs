@@ -66,9 +66,10 @@ export function initConfig() {
         // A5E: зброя — це item.type === "object" з objectType === "weapon"
         // Для HUD показуємо тільки consumable з об'єктів (зілля, розхідники)
         // equippedState: 0=NOT_CARRIED, 1=CARRIED, 2=EQUIPPED
+        // Показуємо зброю якщо вона не лежить в контейнері (не в рюкзаку)
         const itemGroups = [
             { type: "weapon",   filter: i => i.type === "object" && i.system.objectType === "weapon"
-                                           && !i.system.containerId && (i.system.equippedState ?? 0) >= 1 },
+                                           && !i.system.containerId },
             { type: "spell",    filter: i => i.type === "spell" },
             { type: "feature",  filter: i => i.type === "feature" },
             { type: "object",   filter: i => i.type === "object" && i.system.objectType === "consumable"
@@ -328,28 +329,32 @@ export function initConfig() {
                 const mkBtn = (i) => new A5eItemButton({ item: i, activations: this._activations });
 
                 if (this.type === "spell") {
-                    const cantrips = this.items.filter(i => i.system?.level === 0);
-                    const byLevel  = {};
-                    for (const i of this.items) {
-                        const lvl = i.system?.level ?? 0;
-                        if (lvl === 0) continue;
-                        (byLevel[lvl] ??= []).push(i);
+                    try {
+                        const cantrips = this.items.filter(i => i.system?.level === 0);
+                        const byLevel  = {};
+                        for (const i of this.items) {
+                            const lvl = i.system?.level ?? 0;
+                            if (lvl === 0) continue;
+                            (byLevel[lvl] ??= []).push(i);
+                        }
+                        const cats = [];
+                        if (cantrips.length)
+                            cats.push(new AccCat({ label: game.i18n.localize("enhancedcombathud-a5e.hud.spells.cantrip"),
+                                                   buttons: cantrips.map(mkBtn),
+                                                   uses: { max: Infinity, value: Infinity } }));
+                        for (const [lvl, items] of Object.entries(byLevel).sort((a,b) => +a[0]-+b[0])) {
+                            const level = lvl;
+                            cats.push(new AccCat({ label: `${game.i18n.localize("enhancedcombathud-a5e.hud.spells.level")} ${lvl}`,
+                                                   buttons: items.map(mkBtn),
+                                                   uses: () => {
+                                                       const s = this.actor.system.spellResources?.slots?.[level] ?? { current: 0, max: 0 };
+                                                       return { value: s.current, max: s.max };
+                                                   } }));
+                        }
+                        return new AccPanel({ id: this.id, accordionPanelCategories: cats });
+                    } catch(_err) {
+                        return new BtnPanel({ id: this.id, buttons: this.items.map(mkBtn) });
                     }
-                    const cats = [];
-                    if (cantrips.length)
-                        cats.push(new AccCat({ label: game.i18n.localize("enhancedcombathud-a5e.hud.spells.cantrip"),
-                                               buttons: cantrips.map(mkBtn),
-                                               uses: { max: Infinity, value: Infinity } }));
-                    for (const [lvl, items] of Object.entries(byLevel).sort((a,b) => +a[0]-+b[0])) {
-                        const level = lvl;
-                        cats.push(new AccCat({ label: `${game.i18n.localize("enhancedcombathud-a5e.hud.spells.level")} ${lvl}`,
-                                               buttons: items.map(mkBtn),
-                                               uses: () => {
-                                                   const s = this.actor.system.spellResources?.slots?.[level] ?? { current: 0, max: 0 };
-                                                   return { value: s.current, max: s.max };
-                                               } }));
-                    }
-                    return new AccPanel({ id: this.id, accordionPanelCategories: cats });
                 }
 
                 if (this.type === "maneuver") {

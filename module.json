@@ -2,7 +2,7 @@
     "id": "enhancedcombathud-a5e",
     "title": "Argon - Combat HUD (A5E)",
     "description": "Level Up: Advanced 5th Edition (A5E) bridge for Argon Combat HUD. Requires Argon - Combat HUD (CORE).",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "authors": [{ "name": "Community" }],
     "compatibility": { "minimum": "12", "verified": "13" },
     "relationships": {
