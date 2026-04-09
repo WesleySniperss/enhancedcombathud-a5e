@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Jonkm/AppData/Local/FoundryVTT/Data/systems/**)",
+      "Bash(xargs grep:*)"
+    ]
+  }
+}
