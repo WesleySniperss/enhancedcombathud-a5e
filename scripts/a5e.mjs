@@ -254,16 +254,19 @@ export function initConfig() {
 
             async _onLeftClick(event) {
                 ui.ARGON.interceptNextDialog(event.currentTarget);
-                // Знаходимо дії що відповідають панелі (action/bonus/reaction/free)
-                const matching = this._activations
-                    ? Object.entries(this.item.system.actions ?? {})
-                        .filter(([, a]) => this._activations.includes(a?.activation?.type ?? null))
-                    : null;
-                if (matching?.length === 1) {
-                    // Одна дія — активуємо напряму без діалогу вибору
-                    await this.item.activate?.(matching[0][0]);
+                const allActions = Object.entries(this.item.system.actions ?? {});
+                if (allActions.length === 1) {
+                    // Single action — always activate directly, skip selection dialog
+                    await this.item.activate?.(allActions[0][0]);
+                } else if (allActions.length > 1 && this._activations) {
+                    // Multiple actions — find the one matching this panel's activation type
+                    const matching = allActions.filter(([, a]) => this._activations.includes(a?.activation?.type ?? null));
+                    if (matching.length === 1) {
+                        await this.item.activate?.(matching[0][0]);
+                    } else {
+                        await this.item.activate?.();
+                    }
                 } else {
-                    // Кілька або не відомо — нехай A5E покаже свій діалог
                     await this.item.activate?.();
                 }
                 A5eItemButton.consumeActionEconomy(this.item);
@@ -381,9 +384,15 @@ export function initConfig() {
         }
 
         // ── Action Panels ─────────────────────────────────────────────────────
-        // Повертає true якщо ПЕРША дія айтема відповідає переліку (для розміщення в панелі)
+        // Типи дій що мають ВЛАСНУ панель (bonus/reaction) — все решта йде в action panel
+        const NON_ACTION_PANEL_ACTS = new Set(["bonusAction", "reaction"]);
+
+        // Action panel — catch-all: показуємо все крім bonusAction/reaction
+        // Інші панелі — тільки свій тип
         function matchesPanelActivation(item, activations) {
-            return activations.includes(getActivationType(item));
+            const act = getActivationType(item);
+            if (activations === actionTypes.action) return !NON_ACTION_PANEL_ACTS.has(act);
+            return activations.includes(act);
         }
 
         function buildButtons(actor, activations, color, _weaponSet = null, panelType = null) {
@@ -391,10 +400,12 @@ export function initConfig() {
             for (const { type, filter } of itemGroups) {
                 const items = actor.items.filter(i => {
                     if (!filter(i)) return false;
-                    // Для consumable: вимагаємо явний тип дії (не null) щоб не показувати їжу/раціони
+                    // Для consumable: вимагаємо явний тип дії (не null/empty) щоб не показувати їжу/раціони
                     if (type === "object") {
                         const act = getActivationType(i);
-                        return act && activations.includes(act);
+                        if (!act) return false;
+                        if (activations === actionTypes.action) return !NON_ACTION_PANEL_ACTS.has(act);
+                        return activations.includes(act);
                     }
                     return matchesPanelActivation(i, activations);
                 });
