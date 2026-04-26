@@ -71,10 +71,10 @@ export function initConfig() {
             { type: "weapon",   filter: i => i.type === "object" && i.system.objectType === "weapon"
                                            && !i.system.containerId },
             { type: "spell",    filter: i => i.type === "spell" },
-            { type: "feature",  filter: i => i.type === "feature" },
+            { type: "feature",  filter: i => i.type === "feature" && Object.keys(i.system.actions ?? {}).length > 0 },
             { type: "object",   filter: i => i.type === "object" && i.system.objectType === "consumable"
                                            && !i.system.containerId },
-            { type: "maneuver", filter: i => i.type === "maneuver" },
+            { type: "maneuver", filter: i => i.type === "maneuver" && Object.keys(i.system.actions ?? {}).length > 0 },
         ];
 
         // ── Tooltip ───────────────────────────────────────────────────────────
