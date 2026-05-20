@@ -455,20 +455,15 @@ export function initConfig() {
                 if (!this.actor) return 0;
                 const mv = this.actor.system.attributes?.movement ?? {};
 
-                // A5E зберігає { walk: { distance: 30, unit: "feet" } }
                 let walkSpeed = 0;
                 if (typeof mv.walk === "number") {
                     walkSpeed = mv.walk;
                 } else if (typeof mv.walk === "object" && mv.walk !== null) {
-                    walkSpeed = mv.walk.distance ?? 0;
+                    walkSpeed = mv.walk.distance ?? mv.walk.value ?? 0;
                 }
 
-                // В A5E одиниця завжди "feet", 1 клітинка = 5 футів
-                // grid distance може бути 1 (не 5), тому ділимо на 5 напряму
-                const unit = mv.walk?.unit ?? "feet";
-                const feetPerSquare = unit === "feet" ? 5 : 1;
-
-                return Math.round(walkSpeed / feetPerSquare);
+                const gridDist = canvas.scene?.grid?.distance ?? 5;
+                return Math.round(walkSpeed / gridDist);
             }
         }
 
