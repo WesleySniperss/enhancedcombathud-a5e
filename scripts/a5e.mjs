@@ -462,8 +462,8 @@ export function initConfig() {
                     walkSpeed = mv.walk.distance ?? mv.walk.value ?? 0;
                 }
 
-                const gridDist = canvas.scene?.grid?.distance ?? 5;
-                return Math.round(walkSpeed / gridDist);
+                // A5E stores speed in feet; 1 square = 5 feet (system standard)
+                return Math.round(walkSpeed / 5);
             }
         }
 
