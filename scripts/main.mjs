@@ -17,10 +17,9 @@ Hooks.on("setup", () => {
     initConfig();
 });
 
-// Підтримка v12 (renderApplication) і v13 (renderApplicationV2)
-Hooks.on("renderApplication",   () => applyStyles());
-Hooks.on("renderApplicationV2", () => applyStyles());
-Hooks.on("argonInit",           () => applyStyles());
+// <style> живе в <head> постійно — досить застосувати один раз (+ onChange налаштування)
+Hooks.once("ready",   () => applyStyles());
+Hooks.on("argonInit", () => applyStyles());
 
 function applyStyles() {
     updateDrawerStyles(game.settings.get(MODULE_ID, "drawerFontSize"));

@@ -39,6 +39,22 @@ function getProficiencyIcon(prof) {
 
 function addSign(val) { return val >= 0 ? `+${val}` : `${val}`; }
 
+// CONFIG.A5E значення — вже локалізовані рядки (performPreLocalization на i18nInit)
+function localizeConfig(configKey, value) {
+    const entry = CONFIG.A5E?.[configKey]?.[value];
+    if (typeof entry === "string") return entry;
+    return entry?.label ?? value ?? "";
+}
+
+// A5E range: число (фути) або дескриптор ("short"/"medium"/"long"/"fiveFeet"/"touch"/"self")
+function rangeToFeet(range) {
+    if (typeof range === "number") return range;
+    const mapped = CONFIG.A5E?.rangeValues?.[range];
+    if (typeof mapped === "number") return mapped;
+    const num = Number(range);
+    return Number.isFinite(num) && num > 0 ? num : null;
+}
+
 // ─── Ініціалізація ─────────────────────────────────────────────────────────────
 
 export function initConfig() {
@@ -89,21 +105,24 @@ export function initConfig() {
             // A5E зберігає range/target/damage всередині system.actions[id]
             const firstAction = Object.values(item.system.actions ?? {})[0];
             const firstRange  = firstAction ? Object.values(firstAction.ranges ?? {})[0] : null;
-            if (firstRange?.range)
+            if (firstRange?.range != null && firstRange.range !== "")
                 details.push({ label: "enhancedcombathud-a5e.tooltip.range.name",
-                               value: firstRange.range });
+                               value: localizeConfig("rangeDescriptors", firstRange.range) });
             if (firstAction?.target?.type)
                 details.push({ label: "enhancedcombathud-a5e.tooltip.target.name",
-                               value: firstAction.target.type });
+                               value: localizeConfig("targetTypes", firstAction.target.type) });
 
             switch (item.type) {
-                case "weapon":
-                    subtitle = item.system.weaponType ?? "";
+                case "object":
+                    // Зброя в A5E — це object з objectType === "weapon"
+                    subtitle = localizeConfig("objectTypes", item.system.objectType);
                     break;
-                case "spell":
+                case "spell": {
                     subtitle = `Level ${item.system.level ?? 0}`;
-                    if (item.system.schools) props.push(Object.keys(item.system.schools)[0] ?? "");
+                    const school = item.system.schools?.primary;
+                    if (school) props.push(CONFIG.A5E?.spellSchools?.primary?.[school] ?? school);
                     break;
+                }
                 case "maneuver":
                     subtitle = `Degree ${item.system.degree ?? 1}`;
                     if (item.system.exertionCost)
@@ -111,7 +130,7 @@ export function initConfig() {
                                        value: item.system.exertionCost });
                     break;
                 case "feature":
-                    subtitle = item.system.featureType ?? "";
+                    subtitle = localizeConfig("featureTypes", item.system.featureType);
                     break;
             }
 
@@ -125,7 +144,8 @@ export function initConfig() {
                     details.push({ label: "enhancedcombathud-a5e.tooltip.damage.name", value: rollParts });
             }
 
-            const description = raw ? await TextEditor.enrichHTML(raw, { relativeTo: item }) : "";
+            const TE = foundry.applications?.ux?.TextEditor?.implementation ?? TextEditor;
+            const description = raw ? await TE.enrichHTML(raw, { relativeTo: item }) : "";
             return { title, description, subtitle, details,
                      properties: props.map(p => ({ label: p, secondary: true })),
                      propertiesLabel: "enhancedcombathud-a5e.tooltip.properties.name" };
@@ -201,9 +221,10 @@ export function initConfig() {
                 });
 
                 const skillButtons = Object.entries(skills).map(([key, data]) => {
-                    const label = CONFIG.A5E?.skills?.[key]?.label
-                        ?? key.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase());
-                    const prof  = data.proficient ?? 0;
+                    // CONFIG.A5E.skills[key] — локалізований рядок, не об'єкт з .label
+                    const label = localizeConfig("skills", key)
+                        || key.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase());
+                    const prof  = Number(data.proficient ?? 0); // легасі-дані можуть мати boolean
                     const total = data.total ?? 0;
                     return new A5eDrawerButton([
                         { label: getProficiencyIcon(prof) + label,
@@ -230,23 +251,32 @@ export function initConfig() {
                 this._activations = activations;
             }
             get hasTooltip() { return true; }
+            get _firstAction() {
+                return Object.values(this.item?.system?.actions ?? {})[0] ?? null;
+            }
             get ranges()  {
-                const r = this.item?.system?.range;
-                return { normal: r?.value ?? null, long: r?.long ?? null };
+                // A5E: дистанції живуть у actions[id].ranges[id].range (фути або дескриптор)
+                const feet = Object.values(this._firstAction?.ranges ?? {})
+                    .map(r => rangeToFeet(r?.range))
+                    .filter(v => v != null)
+                    .sort((a, b) => a - b);
+                if (!feet.length) return { normal: null, long: null };
+                return { normal: feet[0], long: feet.length > 1 ? feet[feet.length - 1] : null };
             }
             get targets() {
-                const t = this.item?.system?.target;
+                // A5E target.type: self | creature | object | creatureObject | other
+                const t = this._firstAction?.target;
                 if (!t) return null;
-                if (["creature","ally","enemy"].includes(t.type)) return t.quantity ?? 1;
+                if (["creature", "object", "creatureObject"].includes(t.type)) return t.quantity ?? 1;
                 return null;
             }
             get quantity() {
                 if (!this.item) return null;
+                // uses.value в A5E — це ЗАЛИШОК використань (система віднімає при витраті)
                 const uses = this.item.system.uses;
-                if (uses?.max) return uses.max - (uses.value ?? 0);
-                const firstAction = Object.values(this.item.system.actions ?? {})[0];
-                const actionUses = firstAction?.uses;
-                if (actionUses?.max) return actionUses.max - (actionUses.value ?? 0);
+                if (uses?.max) return uses.value ?? 0;
+                const actionUses = this._firstAction?.uses;
+                if (actionUses?.max) return actionUses.value ?? 0;
                 if (this.item.system.quantity != null) return this.item.system.quantity;
                 return null;
             }
@@ -255,26 +285,29 @@ export function initConfig() {
             async _onLeftClick(event) {
                 ui.ARGON.interceptNextDialog(event.currentTarget);
                 const allActions = Object.entries(this.item.system.actions ?? {});
+                let used = null;
                 if (allActions.length === 1) {
                     // Single action — always activate directly, skip selection dialog
-                    await this.item.activate?.(allActions[0][0]);
+                    used = allActions[0];
+                    await this.item.activate?.(used[0]);
                 } else if (allActions.length > 1 && this._activations) {
                     // Multiple actions — find the one matching this panel's activation type
                     const matching = allActions.filter(([, a]) => this._activations.includes(a?.activation?.type ?? null));
                     if (matching.length === 1) {
-                        await this.item.activate?.(matching[0][0]);
+                        used = matching[0];
+                        await this.item.activate?.(used[0]);
                     } else {
                         await this.item.activate?.();
                     }
                 } else {
                     await this.item.activate?.();
                 }
-                A5eItemButton.consumeActionEconomy(this.item);
+                A5eItemButton.consumeActionEconomy(this.item, used?.[1]?.activation?.type);
             }
             async _onRightClick(_event) { this.item?.sheet?.render(true); }
 
-            static consumeActionEconomy(item) {
-                const act = getActivationType(item);
+            static consumeActionEconomy(item, actType = null) {
+                const act = actType ?? getActivationType(item);
                 if (!act) return;
                 const p = ui.ARGON?.components?.main ?? [];
                 if (actionTypes.action.includes(act)   && p[0]) { p[0].isActionUsed = true; p[0].updateActionUse(); }
@@ -373,7 +406,7 @@ export function initConfig() {
                             label: `${game.i18n.localize("enhancedcombathud-a5e.hud.maneuver.degree")} ${d}`,
                             buttons: items.map(mkBtn),
                             uses: () => {
-                                const ex = this.actor.system.exertion ?? { current: 0, max: 0 };
+                                const ex = this.actor.system.attributes?.exertion ?? { current: 0, max: 0 };
                                 return { value: ex.current, max: ex.max };
                             } }));
                     return new AccPanel({ id: this.id, accordionPanelCategories: cats });
@@ -471,12 +504,13 @@ export function initConfig() {
         class A5eButtonHud extends ARGON.ButtonHud {
             get visible() { return !(game.combat?.started ?? false); }
             async _getButtons() {
+                // A5E API: actor.triggerRest(options); непорожні options пропускають діалог
                 return [
                     { label: "enhancedcombathud-a5e.hud.longRest.name",
-                      onClick: () => this.actor.rest?.({ restType: "long" }) ?? this.actor.longRest?.(),
+                      onClick: () => this.actor.triggerRest?.({ restType: "long" }),
                       icon: "fas fa-bed" },
                     { label: "enhancedcombathud-a5e.hud.shortRest.name",
-                      onClick: () => this.actor.rest?.({ restType: "short" }) ?? this.actor.shortRest?.(),
+                      onClick: () => this.actor.triggerRest?.({ restType: "short" }),
                       icon: "fas fa-coffee" },
                 ];
             }
