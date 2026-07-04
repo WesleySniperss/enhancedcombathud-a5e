@@ -282,6 +282,16 @@ export function initConfig() {
             }
             async getTooltipData() { return await getTooltipDetails(this.item); }
 
+            activateListeners(html) {
+                super.activateListeners(html);
+                // Золота крапка на підготованих закляттях (див. a5e.css)
+                if (this.item?.type === "spell") {
+                    const p = Number(this.item.system?.prepared ?? 0);
+                    this.element.classList.toggle("a5e-prepared", p === 1);
+                    this.element.classList.toggle("a5e-always-prepared", p === 2);
+                }
+            }
+
             async _onLeftClick(event) {
                 ui.ARGON.interceptNextDialog(event.currentTarget);
                 const allActions = Object.entries(this.item.system.actions ?? {});
@@ -366,13 +376,15 @@ export function initConfig() {
 
                 if (this.type === "spell") {
                     try {
-                        const cantrips = this.items.filter(i => i.system?.level === 0);
+                        const byName   = (a, b) => a.name.localeCompare(b.name, game.i18n.lang);
+                        const cantrips = this.items.filter(i => Number(i.system?.level ?? 0) === 0).sort(byName);
                         const byLevel  = {};
                         for (const i of this.items) {
-                            const lvl = i.system?.level ?? 0;
+                            const lvl = Number(i.system?.level ?? 0);
                             if (lvl === 0) continue;
                             (byLevel[lvl] ??= []).push(i);
                         }
+                        Object.values(byLevel).forEach(arr => arr.sort(byName));
                         const cats = [];
                         if (cantrips.length)
                             cats.push(new AccCat({ label: game.i18n.localize("enhancedcombathud-a5e.hud.spells.cantrip"),
@@ -433,6 +445,10 @@ export function initConfig() {
             for (const { type, filter } of itemGroups) {
                 const items = actor.items.filter(i => {
                     if (!filter(i)) return false;
+                    // Усі закляття доступні з Action-панелі: інакше Shield (reaction) чи
+                    // Misty Step (bonus) "зникають" з Cast Spell. Клік однаково списує
+                    // правильний тип дії через consumeActionEconomy
+                    if (type === "spell" && activations === actionTypes.action) return true;
                     // Для consumable: вимагаємо явний тип дії (не null/empty) щоб не показувати їжу/раціони
                     if (type === "object") {
                         const act = getActivationType(i);
