@@ -1,41 +1,53 @@
 /* ═══════════════════════════════════════════════════════════════
    Argon Combat HUD — A5E
-   Дизайн узгоджено з crlngn-ui: графіт + сталева синь, приглушені
-   акценти. Світліші панелі, кольорове кодування кнопок за типом,
-   прозорі грані. Продуктивність: жодного нового backdrop-filter,
-   тіні дрібні — прозорість у rgba нічого не коштує, FPS їсть blur.
+   Палітра прив'язана до Carolingian UI (crlngn-ui): движок тем
+   crlngn пише --color-highlights-* / --color-cool-5-* на :root,
+   ми читаємо їх з фолбеками на кольори ядра Foundry v13 — тож HUD
+   слідує за акцентом і фоном із загальних налаштувань crlngn-ui.
+   Продуктивність: жодного нового backdrop-filter, тіні дрібні —
+   прозорість у rgba нічого не коштує, FPS їсть тільки blur.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-    /* Палітра (токени взяті з crlngn-ui) */
-    --a5e-hud-bg:          rgba(45, 53, 62, 0.78);   /* світлий графіт */
-    --a5e-hud-bg-deep:     rgba(30, 35, 41, 0.88);
-    --a5e-hud-border:      rgba(120, 150, 180, 0.22); /* прозора сталь */
-    --a5e-hud-text:        rgb(224, 232, 238);
-    --a5e-hud-text-dim:    rgba(224, 232, 238, 0.55);
-    --a5e-hud-accent:      rgb(68, 147, 173);         /* бірюза crlngn */
-    --a5e-hud-violet:      rgb(126, 100, 165);        /* бонусна дія */
-    --a5e-hud-red:         rgb(139, 90, 90);          /* реакція */
-    --a5e-hud-green:       rgb(108, 145, 68);         /* вільна дія / кінець ходу */
-    --a5e-hud-orange:      rgb(220, 120, 43);         /* небезпека */
+    /* ── Прив'язка до палітри crlngn-ui / ядра Foundry ── */
+    --a5e-hud-accent:     var(--color-highlights,    rgb(68, 147, 173));
+    --a5e-hud-accent-50:  var(--color-highlights-50, rgba(68, 147, 173, 0.45));
+    --a5e-hud-accent-25:  var(--color-highlights-25, rgba(68, 147, 173, 0.25));
+    --a5e-hud-accent-txt: var(--color-highlights-90, rgb(150, 200, 220));
+
+    /* Тон поверхонь: темний тон теми, освітлений і з прозорістю */
+    --a5e-hud-surface: color-mix(in srgb, var(--color-cool-5, rgb(32, 38, 45)) 85%, white);
+    --a5e-hud-bg:      color-mix(in srgb, var(--a5e-hud-surface) 80%, transparent);
+    --a5e-hud-bg-deep: var(--color-cool-5-90, rgba(30, 35, 41, 0.88));
+
+    --a5e-hud-border:   var(--color-highlights-25, rgba(120, 150, 180, 0.22));
+    --a5e-hud-text:     rgb(224, 232, 238);
+    --a5e-hud-text-dim: rgba(224, 232, 238, 0.55);
+
+    /* Власні відтінки типів дій (у crlngn лише 2 кольори) */
+    --a5e-hud-violet:  rgb(126, 100, 165);        /* бонусна дія */
+    --a5e-hud-red:     rgb(139, 90, 90);          /* реакція */
+    --a5e-hud-green:   rgb(108, 145, 68);         /* вільна дія / кінець ходу */
+    --a5e-hud-orange:  rgb(220, 120, 43);         /* небезпека */
 
     /* ── Перекриття теми Argon ──
        Argon пише тему інлайн-стилем на <html>, тому потрібен !important */
 
-    --ech-font-family: "Work Sans", "Signika", Arial, sans-serif !important;
+    /* Шрифт — той, що вибрано в налаштуваннях crlngn-ui */
+    --ech-font-family: var(--crlngn-font-family, "Work Sans", "Signika", Arial, sans-serif) !important;
 
     /* Портрет */
     --ech-portrait-base-background: var(--a5e-hud-bg) !important;
     --ech-portrait-base-color:      var(--a5e-hud-text) !important;
     --ech-portrait-base-border:     var(--a5e-hud-border) !important;
 
-    /* Основна дія — світлий графіт, бірюзовий ховер */
+    /* Основна дія — графіт теми, акцентний ховер */
     --ech-mainAction-base-background: var(--a5e-hud-bg) !important;
     --ech-mainAction-base-color:      var(--a5e-hud-text) !important;
     --ech-mainAction-base-border:     var(--a5e-hud-border) !important;
-    --ech-mainAction-hover-background: rgba(68, 147, 173, 0.38) !important;
+    --ech-mainAction-hover-background: var(--a5e-hud-accent-50) !important;
     --ech-mainAction-hover-color:      #fff !important;
-    --ech-mainAction-hover-border:     rgba(68, 147, 173, 0.55) !important;
+    --ech-mainAction-hover-border:     var(--a5e-hud-accent-50) !important;
 
     /* Бонусна дія — фіолет, помітно інший */
     --ech-bonusAction-base-background: rgba(78, 62, 116, 0.72) !important;
@@ -73,9 +85,9 @@
     --ech-buttons-base-background: var(--a5e-hud-bg) !important;
     --ech-buttons-base-color:      var(--a5e-hud-text) !important;
     --ech-buttons-base-border:     var(--a5e-hud-border) !important;
-    --ech-buttons-hover-background: rgba(68, 147, 173, 0.38) !important;
+    --ech-buttons-hover-background: var(--a5e-hud-accent-50) !important;
     --ech-buttons-hover-color:      #fff !important;
-    --ech-buttons-hover-border:     rgba(68, 147, 173, 0.55) !important;
+    --ech-buttons-hover-border:     var(--a5e-hud-accent-50) !important;
 
     /* Панель навичок/рятівних */
     --ech-abilityMenu-background:     var(--a5e-hud-bg-deep) !important;
@@ -83,12 +95,12 @@
     --ech-abilityMenu-border:         var(--a5e-hud-border) !important;
     --ech-abilityMenu-base-color:     var(--a5e-hud-text) !important;
     --ech-abilityMenu-base-boxShadow: none !important;
-    --ech-abilityMenu-hover-color:    rgb(120, 190, 215) !important;
-    --ech-abilityMenu-hover-boxShadow: 0 0 6px rgba(68, 147, 173, 0.25) !important;
+    --ech-abilityMenu-hover-color:    var(--a5e-hud-accent-txt) !important;
+    --ech-abilityMenu-hover-boxShadow: 0 0 6px var(--a5e-hud-accent-25) !important;
 
     /* Тултіпи */
-    --ech-tooltip-header-background: rgba(90, 120, 150, 0.18) !important;
-    --ech-tooltip-header-color:      rgb(150, 200, 220) !important;
+    --ech-tooltip-header-background: var(--a5e-hud-accent-25) !important;
+    --ech-tooltip-header-color:      var(--a5e-hud-accent-txt) !important;
     --ech-tooltip-header-border:     var(--a5e-hud-border) !important;
     --ech-tooltip-subtitle-background: transparent !important;
     --ech-tooltip-subtitle-color:      var(--a5e-hud-text-dim) !important;
@@ -97,10 +109,10 @@
     --ech-tooltip-body-color:      var(--a5e-hud-text) !important;
     --ech-tooltip-body-border:     var(--a5e-hud-border) !important;
 
-    /* Рух: бірюза = доступний, тьмяне = використаний, жар = небезпека.
+    /* Рух: акцент теми = доступний, тьмяне = використаний, жар = небезпека.
        Увага: baseMovement-background також фарбує число AC на портреті */
     --ech-movement-baseMovement-background: var(--a5e-hud-accent) !important;
-    --ech-movement-baseMovement-boxShadow:  0 0 6px rgba(68, 147, 173, 0.6) !important;
+    --ech-movement-baseMovement-boxShadow:  0 0 6px var(--a5e-hud-accent-50) !important;
     --ech-movement-used-background: rgba(224, 232, 238, 0.18) !important;
     --ech-movement-used-boxShadow:  none !important;
     --ech-movement-dashMovement-background: var(--a5e-hud-violet) !important;
@@ -203,19 +215,40 @@ body.game .feature-element.a5e-item-object   { border-color: rgba(108, 145, 68, 
 body.game .feature-element.a5e-item-maneuver { border-color: rgba(139, 90, 90, 0.30); }
 
 /* ─── Акордеон заклять/маневрів ──────────────────────────────── */
-/* Заголовки категорій (Level 1, Degree 2…) — світла сталь, помітні
+/* Заголовки категорій (Level 1, Degree 2…) — акцент теми, помітні
    навіть у згорнутих вертикальних вкладках */
 body.game .feature-accordion-title {
-    color: rgb(150, 200, 220) !important;
+    color: var(--a5e-hud-accent-txt) !important;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 600;
 }
 
-/* Пігулки слотів */
+/* ── Пігулки слотів/виснаги ──
+   Ядро дає їм фіксовані 25×25 і flex-shrink:1 у рядку фіксованої
+   ширини — великий пул виснаги маневрів стискав їх у вузькі
+   полосочки. Дозволяємо стискатись, але тримаємо квадрат через
+   aspect-ratio і прибираємо зайві поля. */
+body.game .feature-spell-slots .spell-slot {
+    flex: 0 1 22px;
+    min-width: 8px;
+    max-width: 22px;
+    width: auto;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    margin: 0 3px;
+}
+/* Значок нескінченності в кантріпів — не квадрат, лишаємо як є */
+body.game .feature-spell-slots .spell-slot.spell-cantrip {
+    flex: 0 0 auto;
+    aspect-ratio: auto;
+    max-width: none;
+    margin: 0;
+}
+
 body.game .spell-slot.spell-available {
     background-color: var(--a5e-hud-accent) !important;
-    box-shadow: 0 0 4px rgba(68, 147, 173, 0.6);
+    box-shadow: 0 0 4px var(--a5e-hud-accent-50);
 }
 body.game .spell-slot.spell-used {
     background-color: rgba(224, 232, 238, 0.15) !important;
@@ -240,7 +273,7 @@ body.game .a5e-always-prepared::after {
     height: 7px;
     border-radius: 50%;
     background: var(--a5e-hud-accent);
-    box-shadow: 0 0 6px rgba(68, 147, 173, 0.9);
+    box-shadow: 0 0 6px var(--a5e-hud-accent-50);
     pointer-events: none;
     z-index: 2;
 }
@@ -249,8 +282,8 @@ body.game .a5e-always-prepared::after {
     box-shadow: 0 0 6px rgba(108, 145, 68, 0.9);
 }
 
-/* ─── Панель навичок: сталеві заголовки колонок ──────────────── */
+/* ─── Панель навичок: акцентні заголовки колонок ─────────────── */
 body.game .ability-menu .ability-title,
 body.game .ability-menu .ability-code {
-    color: rgb(150, 200, 220) !important;
+    color: var(--a5e-hud-accent-txt) !important;
 }
