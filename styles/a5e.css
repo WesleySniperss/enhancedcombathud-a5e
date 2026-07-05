@@ -9,11 +9,14 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-    /* ── Прив'язка до палітри crlngn-ui / ядра Foundry ── */
-    --a5e-hud-accent:     var(--color-highlights,    rgb(68, 147, 173));
-    --a5e-hud-accent-50:  var(--color-highlights-50, rgba(68, 147, 173, 0.45));
-    --a5e-hud-accent-25:  var(--color-highlights-25, rgba(68, 147, 173, 0.25));
-    --a5e-hud-accent-txt: var(--color-highlights-90, rgb(150, 200, 220));
+    /* ── Прив'язка до палітри: crlngn-ui → ядро Foundry → фолбек ──
+       Акцент: --color-highlights (crlngn) → --color-warm-1 (стандартний
+       акцент Foundry v13) → бірюза. Альфа-варіанти рахуються через
+       color-mix від того, що зрезолвилось. */
+    --a5e-hud-accent:     var(--color-highlights, var(--color-warm-1, rgb(68, 147, 173)));
+    --a5e-hud-accent-50:  var(--color-highlights-50, color-mix(in srgb, var(--a5e-hud-accent) 50%, transparent));
+    --a5e-hud-accent-25:  var(--color-highlights-25, color-mix(in srgb, var(--a5e-hud-accent) 25%, transparent));
+    --a5e-hud-accent-txt: var(--color-highlights-90, color-mix(in srgb, var(--a5e-hud-accent) 85%, white));
 
     /* Тон поверхонь: темний тон теми, освітлений і з прозорістю */
     --a5e-hud-surface: color-mix(in srgb, var(--color-cool-5, rgb(32, 38, 45)) 85%, white);
