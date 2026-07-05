@@ -1,16 +1,18 @@
 /* ═══════════════════════════════════════════════════════════════
    Argon Combat HUD — A5E
-   Дизайн узгоджено з crlngn-ui: холодний графіт + сталева синь,
-   приглушені акценти з палітри самого crlngn-ui
+   Дизайн узгоджено з crlngn-ui: графіт + сталева синь, приглушені
+   акценти. Світліші панелі, кольорове кодування кнопок за типом,
+   прозорі грані. Продуктивність: жодного нового backdrop-filter,
+   тіні дрібні — прозорість у rgba нічого не коштує, FPS їсть blur.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
     /* Палітра (токени взяті з crlngn-ui) */
-    --a5e-hud-bg:          rgba(25, 29, 34, 0.92);   /* графіт (crlngn 32,37,43) */
-    --a5e-hud-bg-deep:     rgba(20, 23, 27, 0.95);
-    --a5e-hud-border:      rgba(90, 120, 150, 0.45);  /* сталева синь */
-    --a5e-hud-text:        rgb(220, 228, 235);        /* холодний світлий (#edf2f4) */
-    --a5e-hud-text-dim:    rgba(220, 228, 235, 0.55);
+    --a5e-hud-bg:          rgba(45, 53, 62, 0.78);   /* світлий графіт */
+    --a5e-hud-bg-deep:     rgba(30, 35, 41, 0.88);
+    --a5e-hud-border:      rgba(120, 150, 180, 0.22); /* прозора сталь */
+    --a5e-hud-text:        rgb(224, 232, 238);
+    --a5e-hud-text-dim:    rgba(224, 232, 238, 0.55);
     --a5e-hud-accent:      rgb(68, 147, 173);         /* бірюза crlngn */
     --a5e-hud-violet:      rgb(126, 100, 165);        /* бонусна дія */
     --a5e-hud-red:         rgb(139, 90, 90);          /* реакція */
@@ -27,53 +29,53 @@
     --ech-portrait-base-color:      var(--a5e-hud-text) !important;
     --ech-portrait-base-border:     var(--a5e-hud-border) !important;
 
-    /* Основна дія — графіт зі сталевою рамкою, бірюзовий ховер */
+    /* Основна дія — світлий графіт, бірюзовий ховер */
     --ech-mainAction-base-background: var(--a5e-hud-bg) !important;
     --ech-mainAction-base-color:      var(--a5e-hud-text) !important;
     --ech-mainAction-base-border:     var(--a5e-hud-border) !important;
-    --ech-mainAction-hover-background: rgba(68, 147, 173, 0.30) !important;
+    --ech-mainAction-hover-background: rgba(68, 147, 173, 0.38) !important;
     --ech-mainAction-hover-color:      #fff !important;
-    --ech-mainAction-hover-border:     var(--a5e-hud-accent) !important;
+    --ech-mainAction-hover-border:     rgba(68, 147, 173, 0.55) !important;
 
-    /* Бонусна дія — приглушений фіолет */
-    --ech-bonusAction-base-background: rgba(30, 27, 40, 0.92) !important;
+    /* Бонусна дія — фіолет, помітно інший */
+    --ech-bonusAction-base-background: rgba(78, 62, 116, 0.72) !important;
     --ech-bonusAction-base-color:      var(--a5e-hud-text) !important;
-    --ech-bonusAction-base-border:     rgba(126, 100, 165, 0.55) !important;
-    --ech-bonusAction-hover-background: rgba(126, 100, 165, 0.35) !important;
+    --ech-bonusAction-base-border:     rgba(126, 100, 165, 0.30) !important;
+    --ech-bonusAction-hover-background: rgba(126, 100, 165, 0.48) !important;
     --ech-bonusAction-hover-color:      #fff !important;
-    --ech-bonusAction-hover-border:     var(--a5e-hud-violet) !important;
+    --ech-bonusAction-hover-border:     rgba(126, 100, 165, 0.55) !important;
 
-    /* Реакція — приглушена цегла */
-    --ech-reaction-base-background: rgba(36, 26, 26, 0.92) !important;
+    /* Реакція — тепла цегла */
+    --ech-reaction-base-background: rgba(112, 66, 66, 0.72) !important;
     --ech-reaction-base-color:      var(--a5e-hud-text) !important;
-    --ech-reaction-base-border:     rgba(139, 90, 90, 0.60) !important;
-    --ech-reaction-hover-background: rgba(139, 90, 90, 0.38) !important;
+    --ech-reaction-base-border:     rgba(139, 90, 90, 0.32) !important;
+    --ech-reaction-hover-background: rgba(139, 90, 90, 0.50) !important;
     --ech-reaction-hover-color:      #fff !important;
-    --ech-reaction-hover-border:     var(--a5e-hud-red) !important;
+    --ech-reaction-hover-border:     rgba(139, 90, 90, 0.55) !important;
 
-    /* Вільна дія — приглушена зелень */
-    --ech-freeAction-base-background: rgba(24, 29, 21, 0.92) !important;
+    /* Вільна дія — зелень */
+    --ech-freeAction-base-background: rgba(72, 96, 52, 0.72) !important;
     --ech-freeAction-base-color:      var(--a5e-hud-text) !important;
-    --ech-freeAction-base-border:     rgba(108, 145, 68, 0.50) !important;
-    --ech-freeAction-hover-background: rgba(108, 145, 68, 0.32) !important;
+    --ech-freeAction-base-border:     rgba(108, 145, 68, 0.30) !important;
+    --ech-freeAction-hover-background: rgba(108, 145, 68, 0.46) !important;
     --ech-freeAction-hover-color:      #fff !important;
-    --ech-freeAction-hover-border:     var(--a5e-hud-green) !important;
+    --ech-freeAction-hover-border:     rgba(108, 145, 68, 0.55) !important;
 
-    /* Завершення ходу */
-    --ech-endTurn-base-background: rgba(24, 29, 21, 0.92) !important;
+    /* Завершення ходу — насиченіша зелень, щоб відрізнялось від вільної дії */
+    --ech-endTurn-base-background: rgba(58, 96, 62, 0.75) !important;
     --ech-endTurn-base-color:      var(--a5e-hud-text) !important;
-    --ech-endTurn-base-border:     rgba(108, 145, 68, 0.50) !important;
-    --ech-endTurn-hover-background: rgba(108, 145, 68, 0.40) !important;
+    --ech-endTurn-base-border:     rgba(108, 145, 68, 0.30) !important;
+    --ech-endTurn-hover-background: rgba(108, 145, 68, 0.52) !important;
     --ech-endTurn-hover-color:      #fff !important;
-    --ech-endTurn-hover-border:     var(--a5e-hud-green) !important;
+    --ech-endTurn-hover-border:     rgba(108, 145, 68, 0.55) !important;
 
     /* Кнопки (відпочинок тощо) */
     --ech-buttons-base-background: var(--a5e-hud-bg) !important;
     --ech-buttons-base-color:      var(--a5e-hud-text) !important;
     --ech-buttons-base-border:     var(--a5e-hud-border) !important;
-    --ech-buttons-hover-background: rgba(68, 147, 173, 0.30) !important;
+    --ech-buttons-hover-background: rgba(68, 147, 173, 0.38) !important;
     --ech-buttons-hover-color:      #fff !important;
-    --ech-buttons-hover-border:     var(--a5e-hud-accent) !important;
+    --ech-buttons-hover-border:     rgba(68, 147, 173, 0.55) !important;
 
     /* Панель навичок/рятівних */
     --ech-abilityMenu-background:     var(--a5e-hud-bg-deep) !important;
@@ -82,7 +84,7 @@
     --ech-abilityMenu-base-color:     var(--a5e-hud-text) !important;
     --ech-abilityMenu-base-boxShadow: none !important;
     --ech-abilityMenu-hover-color:    rgb(120, 190, 215) !important;
-    --ech-abilityMenu-hover-boxShadow: 0 0 8px rgba(68, 147, 173, 0.25) !important;
+    --ech-abilityMenu-hover-boxShadow: 0 0 6px rgba(68, 147, 173, 0.25) !important;
 
     /* Тултіпи */
     --ech-tooltip-header-background: rgba(90, 120, 150, 0.18) !important;
@@ -99,7 +101,7 @@
        Увага: baseMovement-background також фарбує число AC на портреті */
     --ech-movement-baseMovement-background: var(--a5e-hud-accent) !important;
     --ech-movement-baseMovement-boxShadow:  0 0 6px rgba(68, 147, 173, 0.6) !important;
-    --ech-movement-used-background: rgba(220, 228, 235, 0.18) !important;
+    --ech-movement-used-background: rgba(224, 232, 238, 0.18) !important;
     --ech-movement-used-boxShadow:  none !important;
     --ech-movement-dashMovement-background: var(--a5e-hud-violet) !important;
     --ech-movement-dashMovement-boxShadow:  0 0 6px rgba(126, 100, 165, 0.6) !important;
@@ -113,7 +115,7 @@
 .movement-hud i,
 .movement-hud svg { display: none !important; }
 
-/* ─── Фони панелей ───────────────────────────────────────────── */
+/* ─── Фони панелей — світліші, грані прозорі ─────────────────── */
 body.game .portrait-hud,
 body.game .movement-hud:not(.hidden),
 body.game .action-element.ech-blur {
@@ -122,24 +124,83 @@ body.game .action-element.ech-blur {
 }
 
 body.game .action-element.ech-blur.bonus-action {
-    background-color: rgba(30, 27, 40, 0.92) !important;
-    border-color: rgba(126, 100, 165, 0.55) !important;
+    background-color: rgba(78, 62, 116, 0.72) !important;
+    border-color: rgba(126, 100, 165, 0.30) !important;
 }
 
 body.game .action-element.ech-blur.reaction {
-    background-color: rgba(36, 26, 26, 0.92) !important;
-    border-color: rgba(139, 90, 90, 0.60) !important;
+    background-color: rgba(112, 66, 66, 0.72) !important;
+    border-color: rgba(139, 90, 90, 0.32) !important;
 }
 
 body.game .action-element.ech-blur.free-action {
-    background-color: rgba(24, 29, 21, 0.92) !important;
-    border-color: rgba(108, 145, 68, 0.50) !important;
+    background-color: rgba(72, 96, 52, 0.72) !important;
+    border-color: rgba(108, 145, 68, 0.30) !important;
 }
 
 body.game .action-element.ech-blur.end-turn {
-    background-color: rgba(24, 29, 21, 0.92) !important;
-    border-color: rgba(108, 145, 68, 0.50) !important;
+    background-color: rgba(58, 96, 62, 0.75) !important;
+    border-color: rgba(108, 145, 68, 0.30) !important;
 }
+
+/* ─── Кольорове кодування кнопок за типом ────────────────────────
+   Класи a5e-item-* ставить a5e.mjs.
+   Дешево: плоский rgba-фон, без нових фільтрів. */
+
+/* Великі кнопки категорій в Action-панелі (Use Weapon, Cast Spell…):
+   кожен тип — свій відтінок. У панелей з власним кольором
+   (бонус/реакція/вільна) колір панелі лишається головним. */
+body.game .action-element.ech-blur.a5e-item-weapon:not(.bonus-action):not(.reaction):not(.free-action):not(.end-turn) {
+    background-color: rgba(70, 100, 130, 0.72) !important;
+    border-color: rgba(120, 150, 180, 0.30) !important;
+}
+body.game .action-element.ech-blur.a5e-item-spell:not(.bonus-action):not(.reaction):not(.free-action):not(.end-turn) {
+    background-color: rgba(98, 80, 132, 0.72) !important;
+    border-color: rgba(126, 100, 165, 0.32) !important;
+}
+body.game .action-element.ech-blur.a5e-item-feature:not(.bonus-action):not(.reaction):not(.free-action):not(.end-turn) {
+    background-color: rgba(52, 108, 126, 0.72) !important;
+    border-color: rgba(68, 147, 173, 0.32) !important;
+}
+body.game .action-element.ech-blur.a5e-item-object:not(.bonus-action):not(.reaction):not(.free-action):not(.end-turn) {
+    background-color: rgba(88, 112, 58, 0.72) !important;
+    border-color: rgba(108, 145, 68, 0.30) !important;
+}
+body.game .action-element.ech-blur.a5e-item-maneuver:not(.bonus-action):not(.reaction):not(.free-action):not(.end-turn) {
+    background-color: rgba(116, 74, 74, 0.72) !important;
+    border-color: rgba(139, 90, 90, 0.32) !important;
+}
+
+/* Кнопки предметів у розгорнутих панелях: фарбуємо підпис-смужку
+   знизу (.feature-element-title) — картинка предмета лишається
+   головною, а колір смужки одразу каже, що це за тип. */
+body.game .a5e-item-weapon   > .feature-element-title {
+    background-color: rgba(70, 100, 130, 0.60) !important;
+    border-top-color: rgba(120, 150, 180, 0.35) !important;
+}
+body.game .a5e-item-spell    > .feature-element-title {
+    background-color: rgba(126, 100, 165, 0.55) !important;
+    border-top-color: rgba(126, 100, 165, 0.40) !important;
+}
+body.game .a5e-item-feature  > .feature-element-title {
+    background-color: rgba(56, 118, 138, 0.55) !important;
+    border-top-color: rgba(68, 147, 173, 0.40) !important;
+}
+body.game .a5e-item-object   > .feature-element-title {
+    background-color: rgba(96, 124, 62, 0.55) !important;
+    border-top-color: rgba(108, 145, 68, 0.40) !important;
+}
+body.game .a5e-item-maneuver > .feature-element-title {
+    background-color: rgba(126, 80, 80, 0.55) !important;
+    border-top-color: rgba(139, 90, 90, 0.40) !important;
+}
+
+/* Тонка кольорова грань самої кнопки — прозора, підсвічує тип */
+body.game .feature-element.a5e-item-weapon   { border-color: rgba(120, 150, 180, 0.30); }
+body.game .feature-element.a5e-item-spell    { border-color: rgba(126, 100, 165, 0.30); }
+body.game .feature-element.a5e-item-feature  { border-color: rgba(68, 147, 173, 0.30); }
+body.game .feature-element.a5e-item-object   { border-color: rgba(108, 145, 68, 0.30); }
+body.game .feature-element.a5e-item-maneuver { border-color: rgba(139, 90, 90, 0.30); }
 
 /* ─── Акордеон заклять/маневрів ──────────────────────────────── */
 /* Заголовки категорій (Level 1, Degree 2…) — світла сталь, помітні
@@ -149,7 +210,6 @@ body.game .feature-accordion-title {
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 600;
-    text-shadow: 0 0 6px rgba(68, 147, 173, 0.35);
 }
 
 /* Пігулки слотів */
@@ -158,7 +218,7 @@ body.game .spell-slot.spell-available {
     box-shadow: 0 0 4px rgba(68, 147, 173, 0.6);
 }
 body.game .spell-slot.spell-used {
-    background-color: rgba(220, 228, 235, 0.15) !important;
+    background-color: rgba(224, 232, 238, 0.15) !important;
     box-shadow: none;
 }
 body.game .spell-slot.spell-cantrip {

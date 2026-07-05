@@ -282,9 +282,14 @@ export function initConfig() {
             }
             async getTooltipData() { return await getTooltipDetails(this.item); }
 
-            activateListeners(html) {
-                super.activateListeners(html);
-                // Золота крапка на підготованих закляттях (див. a5e.css)
+            async activateListeners(html) {
+                await super.activateListeners(html);
+                // Клас типу предмета — для кольорового кодування кнопок (див. a5e.css)
+                const t = this.item?.type === "object"
+                    ? (this.item.system?.objectType === "weapon" ? "weapon" : "object")
+                    : this.item?.type;
+                if (t) this.element.classList.add(`a5e-item-${t}`);
+                // Крапка на підготованих закляттях (див. a5e.css)
                 if (this.item?.type === "spell") {
                     const p = Number(this.item.system?.prepared ?? 0);
                     this.element.classList.toggle("a5e-prepared", p === 1);
@@ -365,6 +370,12 @@ export function initConfig() {
                          feature: "modules/enhancedcombathud/icons/mighty-force.webp",
                          object:  "modules/enhancedcombathud/icons/drink-me.webp",
                          maneuver:"modules/enhancedcombathud/icons/mighty-force.webp" }[this.type];
+            }
+
+            async activateListeners(html) {
+                await super.activateListeners(html);
+                // Клас типу — кольорове кодування кнопок-категорій (див. a5e.css)
+                this.element.classList.add(`a5e-item-${this.type}`);
             }
 
             async _getPanel() {
