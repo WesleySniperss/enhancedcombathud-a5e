@@ -59,13 +59,36 @@ function rangeToFeet(range) {
 
 export function initConfig() {
 
-    const refreshHud = (item) => {
-        if (item.parent === ui.ARGON?._actor && ui.ARGON?.rendered)
-            ui.ARGON.refresh();
-    };
-    Hooks.on("updateItem", refreshHud);
-    Hooks.on("createItem", refreshHud);
-    Hooks.on("deleteItem", refreshHud);
+    // Argon сам обробляє оновлення точково: перемальовує потрібну кнопку
+    // (а render() перезапускає activateListeners, тож наші класи й крапки
+    // підготованості оновлюються самі), і робить повний refresh на
+    // create/delete через _checkItemCount. Нам лишається лише той випадок,
+    // якого ядро не знає: коли предмет змінює панель/категорію або
+    // з'являється/зникає з фільтра. Інакше ми б перебудовували весь HUD
+    // на кожну витрачену зарядку.
+
+    // Зміна в actions структурна, тільки якщо дію додали/видалили або
+    // змінили тип активації. Витрата зарядки дає
+    // {actions: {id: {uses: {value}}}} — це ядро малює саме
+    const isStructuralActionChange = (actions) =>
+        Object.entries(actions).some(([id, a]) =>
+            id.startsWith("-=") ||
+            (a && typeof a === "object" && "activation" in a));
+
+    const refreshHud = foundry.utils.debounce(() => {
+        if (ui.ARGON?.rendered) ui.ARGON.refresh();
+    }, 100);
+
+    Hooks.on("updateItem", (item, changes) => {
+        if (item.parent !== ui.ARGON?._actor) return;
+        const s = changes?.system;
+        if (!s) return;
+        // containerId — зброя в/з рюкзака, objectType — зміна групи,
+        // level/degree — інша категорія акордеона
+        const structural = ["containerId", "objectType", "level", "degree"].some(f => f in s)
+            || (!!s.actions && isStructuralActionChange(s.actions));
+        if (structural) refreshHud();
+    });
 
     Hooks.on("argonInit", (CoreHUD) => {
         if (game.system.id !== "a5e") return;
@@ -144,7 +167,10 @@ export function initConfig() {
                     details.push({ label: "enhancedcombathud-a5e.tooltip.damage.name", value: rollParts });
             }
 
-            const TE = foundry.applications?.ux?.TextEditor?.implementation ?? TextEditor;
+            // v13+ шлях; globalThis щоб не отримати ReferenceError, якщо
+            // глобальний TextEditor приберуть остаточно
+            const TE = foundry.applications?.ux?.TextEditor?.implementation
+                    ?? globalThis.TextEditor;
             const description = raw ? await TE.enrichHTML(raw, { relativeTo: item }) : "";
             return { title, description, subtitle, details,
                      properties: props.map(p => ({ label: p, secondary: true })),
@@ -522,8 +548,11 @@ export function initConfig() {
                     walkSpeed = mv.walk.distance ?? mv.walk.value ?? 0;
                 }
 
-                // A5E stores speed in feet; 1 square = 5 feet (system standard)
-                return Math.round(walkSpeed / 5);
+                // Переводимо швидкість у клітинки за сіткою сцени (не завжди 5 футів:
+                // буває 10-футова сітка чи метрична). || 5 ловить 0/undefined
+                // на безсіткових сценах і до готовності canvas
+                const perSquare = canvas?.scene?.grid?.distance || 5;
+                return Math.round(walkSpeed / perSquare);
             }
         }
 
