@@ -541,18 +541,31 @@ export function initConfig() {
                 if (!this.actor) return 0;
                 const mv = this.actor.system.attributes?.movement ?? {};
 
-                let walkSpeed = 0;
-                if (typeof mv.walk === "number") {
-                    walkSpeed = mv.walk;
-                } else if (typeof mv.walk === "object" && mv.walk !== null) {
-                    walkSpeed = mv.walk.distance ?? mv.walk.value ?? 0;
-                }
+                // Читаємо одну швидкість: число (легасі) або {distance, unit}
+                const readSpeed = (m) => {
+                    if (typeof m === "number") return m;
+                    if (m && typeof m === "object") return m.distance ?? m.value ?? 0;
+                    return 0;
+                };
 
-                // Переводимо швидкість у клітинки за сіткою сцени (не завжди 5 футів:
+                let speed = readSpeed(mv.walk);
+                // Пішої може не бути зовсім (літаючі/плаваючі істоти) — беремо
+                // найбільшу з наявних, щоб не показати порожню шкалу
+                if (!speed) {
+                    speed = Math.max(0, ...Object.values(mv).map(readSpeed)
+                                              .filter(Number.isFinite));
+                }
+                // У схемі a5e walk.distance має initial: 0, тож у персонажів,
+                // яким швидкість не проставили (напр. створених ззовні),
+                // тут нуль — ядро тоді малює нуль квадратиків і шкала пуста.
+                // Показуємо стандартні 30 футів, щоб HUD лишався придатним
+                if (!speed) speed = 30;
+
+                // Переводимо в клітинки за сіткою сцени (не завжди 5 футів:
                 // буває 10-футова сітка чи метрична). || 5 ловить 0/undefined
                 // на безсіткових сценах і до готовності canvas
                 const perSquare = canvas?.scene?.grid?.distance || 5;
-                return Math.round(walkSpeed / perSquare);
+                return Math.max(1, Math.round(speed / perSquare));
             }
         }
 
