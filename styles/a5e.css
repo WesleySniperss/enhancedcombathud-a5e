@@ -130,10 +130,6 @@
     --ech-movement-dangerMovement-boxShadow:  rgba(220, 120, 43, 0.6) !important;
 }
 
-/* Порожній ButtonHud (кнопки відпочинку прибрані): ядро ставить
-   display:grid інлайном, тому клас .hidden не спрацьовує */
-body.game .a5e-buttonhud-hidden { display: none !important; }
-
 /* ─── Рух: прибираємо зайві елементи ───────────────────────────
    ВАЖЛИВО: ButtonHud (кнопки відпочинку) має той самий клас
    .movement-hud, що й шкала руху. Тому ховаємо іконки строго
