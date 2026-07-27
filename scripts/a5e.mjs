@@ -535,7 +535,10 @@ export function initConfig() {
 
         // ── Movement Hud ──────────────────────────────────────────────────────
         class A5eMovementHud extends ARGON.MovementHud {
-            get visible() { return game.combat?.started ?? false; }
+            // Показуємо шкалу руху завжди (не лише в бою) — вона зайняла місце
+            // кнопок відпочинку. !!this.token заразом страхує ядро: воно читає
+            // this.token.document.movementHistory без перевірки на null
+            get visible() { return !!this.token; }
 
             get movementMax() {
                 if (!this.actor) return 0;
@@ -569,20 +572,17 @@ export function initConfig() {
             }
         }
 
-        // ── Button Hud (rest) ─────────────────────────────────────────────────
+        // ── Button Hud ────────────────────────────────────────────────────────
+        // Кнопки відпочинку прибрані — на їх місці тепер завжди шкала руху.
+        // Відпочинок лишається доступним із листа персонажа (кнопка A5E).
+        // Порожній ButtonHud все одно реєструємо: базовий клас без
+        // _getButtons() пише помилку в консоль. Ядро в render() ставить
+        // display:grid інлайном, перебиваючи клас .hidden, тому ховаємо
+        // власним класом через CSS
         class A5eButtonHud extends ARGON.ButtonHud {
-            get visible() { return !(game.combat?.started ?? false); }
-            async _getButtons() {
-                // A5E API: actor.triggerRest(options); непорожні options пропускають діалог
-                return [
-                    { label: "enhancedcombathud-a5e.hud.longRest.name",
-                      onClick: () => this.actor.triggerRest?.({ restType: "long" }),
-                      icon: "fas fa-bed" },
-                    { label: "enhancedcombathud-a5e.hud.shortRest.name",
-                      onClick: () => this.actor.triggerRest?.({ restType: "short" }),
-                      icon: "fas fa-coffee" },
-                ];
-            }
+            get classes() { return [...super.classes, "a5e-buttonhud-hidden"]; }
+            get visible() { return false; }
+            async _getButtons() { return []; }
         }
 
         // ── Реєстрація ────────────────────────────────────────────────────────
