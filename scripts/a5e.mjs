@@ -55,6 +55,22 @@ function rangeToFeet(range) {
     return Number.isFinite(num) && num > 0 ? num : null;
 }
 
+// A5E prepared: 0 — не підготовано, 1 — підготовано, 2 — завжди підготовано.
+// Типу книги заклять (підготовка чи відомі закляття) система не зберігає,
+// тож визначаємо по даних: книга, де є хоч одне підготоване закляття
+// 1+ рівня, працює через підготовку (wizard) — непідготовані в ній ховаємо.
+// "Завжди підготовані" книгу такою не роблять: вони бувають і в sorcerer.
+// Книги без підготовки (sorcerer, innate) та замовляння показуємо повністю.
+function getSpellVisibilityFilter(actor) {
+    const level    = (i) => Number(i.system?.level ?? 0);
+    const prepared = (i) => Number(i.system?.prepared ?? 0);
+    const book     = (i) => i.system?.spellBook ?? "";
+    const preparingBooks = new Set(actor.items
+        .filter(i => i.type === "spell" && level(i) > 0 && prepared(i) === 1)
+        .map(book));
+    return (i) => level(i) === 0 || prepared(i) > 0 || !preparingBooks.has(book(i));
+}
+
 // ─── Ініціалізація ─────────────────────────────────────────────────────────────
 
 export function initConfig() {
@@ -84,8 +100,9 @@ export function initConfig() {
         const s = changes?.system;
         if (!s) return;
         // containerId — зброя в/з рюкзака, objectType — зміна групи,
-        // level/degree — інша категорія акордеона
-        const structural = ["containerId", "objectType", "level", "degree"].some(f => f in s)
+        // level/degree — інша категорія акордеона, prepared/spellBook —
+        // закляття з'являється/зникає з Cast Spell
+        const structural = ["containerId", "objectType", "level", "degree", "prepared", "spellBook"].some(f => f in s)
             || (!!s.actions && isStructuralActionChange(s.actions));
         if (structural) refreshHud();
     });
@@ -479,9 +496,11 @@ export function initConfig() {
 
         function buildButtons(actor, activations, color, _weaponSet = null, panelType = null) {
             const buttons = [];
+            const spellVisible = getSpellVisibilityFilter(actor);
             for (const { type, filter } of itemGroups) {
                 const items = actor.items.filter(i => {
                     if (!filter(i)) return false;
+                    if (type === "spell" && !spellVisible(i)) return false;
                     // Усі закляття доступні з Action-панелі: інакше Shield (reaction) чи
                     // Misty Step (bonus) "зникають" з Cast Spell. Клік однаково списує
                     // правильний тип дії через consumeActionEconomy
