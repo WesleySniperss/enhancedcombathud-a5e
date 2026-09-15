@@ -61,13 +61,20 @@ function rangeToFeet(range) {
 // 1+ рівня, працює через підготовку (wizard) — непідготовані в ній ховаємо.
 // "Завжди підготовані" книгу такою не роблять: вони бувають і в sorcerer.
 // Книги без підготовки (sorcerer, innate) та замовляння показуємо повністю.
+// Щоб візард без жодного підготованого не бачив усю книгу, є ще сигнал
+// spellResources.maxPrepared (поле "Prepared Spells" у листі). Воно на весь
+// актор, тож книгу через нього вважаємо підготовчою, лише коли вона одна.
 function getSpellVisibilityFilter(actor) {
     const level    = (i) => Number(i.system?.level ?? 0);
     const prepared = (i) => Number(i.system?.prepared ?? 0);
     const book     = (i) => i.system?.spellBook ?? "";
-    const preparingBooks = new Set(actor.items
-        .filter(i => i.type === "spell" && level(i) > 0 && prepared(i) === 1)
+    const spells   = actor.items.filter(i => i.type === "spell");
+    const preparingBooks = new Set(spells
+        .filter(i => level(i) > 0 && prepared(i) === 1)
         .map(book));
+    const books = new Set(spells.map(book));
+    if (books.size === 1 && Number(actor.system?.spellResources?.maxPrepared ?? 0) > 0)
+        books.forEach(b => preparingBooks.add(b));
     return (i) => level(i) === 0 || prepared(i) > 0 || !preparingBooks.has(book(i));
 }
 
@@ -105,6 +112,12 @@ export function initConfig() {
         const structural = ["containerId", "objectType", "level", "degree", "prepared", "spellBook"].some(f => f in s)
             || (!!s.actions && isStructuralActionChange(s.actions));
         if (structural) refreshHud();
+    });
+
+    // Ліміт підготовки впливає на фільтр заклять (див. getSpellVisibilityFilter)
+    Hooks.on("updateActor", (actor, changes) => {
+        if (actor !== ui.ARGON?._actor) return;
+        if ("maxPrepared" in (changes?.system?.spellResources ?? {})) refreshHud();
     });
 
     Hooks.on("argonInit", (CoreHUD) => {
