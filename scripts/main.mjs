@@ -34,7 +34,10 @@ export function updateDrawerStyles(fontSize) {
     }
     // Ядро Argon: портрет 375px, праворуч колонка 115px (шкала руху / кнопки
     // відпочинку, .hidden коли її немає). Панель рівно до правого краю цієї
-    // колонки; шрифт на ширину не впливає, інакше панель лізе на панель дій
+    // колонки; шрифт на ширину не впливає, інакше панель лізе на панель дій.
+    // ">" у :has — не прибирати: ядро додає панелі прямо в корінь HUD, а
+    // пошук лише серед дітей не змушує браузер перевіряти селектор на кожне
+    // перемальовування кнопок і квадратиків руху всередині HUD
     style.textContent = `
         .ability-menu,
         .ability-menu .collapsible-panel {
@@ -42,8 +45,8 @@ export function updateDrawerStyles(fontSize) {
             min-width: 375px !important;
             font-size: ${fontSize}px !important;
         }
-        .extended-combat-hud:has(.movement-hud:not(.hidden)) .ability-menu,
-        .extended-combat-hud:has(.movement-hud:not(.hidden)) .ability-menu .collapsible-panel {
+        .extended-combat-hud:has(> .movement-hud:not(.hidden)) > .ability-menu,
+        .extended-combat-hud:has(> .movement-hud:not(.hidden)) > .ability-menu .collapsible-panel {
             width: 490px !important;
             min-width: 490px !important;
         }
