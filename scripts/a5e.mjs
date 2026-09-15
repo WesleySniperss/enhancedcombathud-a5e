@@ -78,6 +78,22 @@ function getSpellVisibilityFilter(actor) {
     return (i) => level(i) === 0 || prepared(i) > 0 || !preparingBooks.has(book(i));
 }
 
+// Скільки футів в одній клітинці сцени — щоб перевести швидкість A5E (фути)
+// у квадратики шкали руху. Ядро рахує пройдене як cost / grid.distance, тобто
+// в клітинках за будь-яких одиниць, тож нам треба лише правильно порахувати
+// максимум. Сітці віримо, тільки коли одиниці — фути чи метри: у сцени без
+// одиниць (напр. стандартна "Foundry Virtual Tabletop": distance 1, units "")
+// 30 футів інакше ставали 30 квадратиками. Решта — стандартні 5 футів
+const FEET_UNITS  = new Set(["ft", "feet", "foot", "'", "фт", "фут", "футів"]);
+const METER_UNITS = new Set(["m", "meter", "meters", "metre", "metres", "м", "метр", "метрів"]);
+function feetPerSquare(grid = canvas?.scene?.grid) {
+    const distance = Number(grid?.distance) || 0;
+    const units    = String(grid?.units ?? "").trim().toLowerCase().replace(/\.$/, "");
+    if (distance > 0 && FEET_UNITS.has(units))  return distance;
+    if (distance > 0 && METER_UNITS.has(units)) return distance / 1.5 * 5;
+    return 5;
+}
+
 // ─── Ініціалізація ─────────────────────────────────────────────────────────────
 
 export function initConfig() {
@@ -596,11 +612,7 @@ export function initConfig() {
                 // Показуємо стандартні 30 футів, щоб HUD лишався придатним
                 if (!speed) speed = 30;
 
-                // Переводимо в клітинки за сіткою сцени (не завжди 5 футів:
-                // буває 10-футова сітка чи метрична). || 5 ловить 0/undefined
-                // на безсіткових сценах і до готовності canvas
-                const perSquare = canvas?.scene?.grid?.distance || 5;
-                return Math.max(1, Math.round(speed / perSquare));
+                return Math.max(1, Math.round(speed / feetPerSquare()));
             }
         }
 
