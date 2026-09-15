@@ -33,15 +33,19 @@ export function updateDrawerStyles(fontSize) {
         document.head.appendChild(style);
     }
     // Ядро Argon: портрет 375px, праворуч колонка 115px (шкала руху / кнопки
-    // відпочинку). Панель тягнемо на обидва — до правого краю кнопок відпочинку;
-    // більший шрифт розширює її так само, як раніше розширював 375px
-    const width = Math.max(375 + 115, Math.round(375 * (fontSize / 13)) + 115);
+    // відпочинку, .hidden коли її немає). Панель рівно до правого краю цієї
+    // колонки; шрифт на ширину не впливає, інакше панель лізе на панель дій
     style.textContent = `
         .ability-menu,
         .ability-menu .collapsible-panel {
-            width: ${width}px !important;
-            min-width: ${width}px !important;
+            width: 375px !important;
+            min-width: 375px !important;
             font-size: ${fontSize}px !important;
+        }
+        .extended-combat-hud:has(.movement-hud:not(.hidden)) .ability-menu,
+        .extended-combat-hud:has(.movement-hud:not(.hidden)) .ability-menu .collapsible-panel {
+            width: 490px !important;
+            min-width: 490px !important;
         }
         .ability-menu * {
             font-size: ${fontSize}px !important;
