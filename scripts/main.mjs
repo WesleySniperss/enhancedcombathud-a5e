@@ -32,7 +32,10 @@ export function updateDrawerStyles(fontSize) {
         style.id = "a5e-hud-styles";
         document.head.appendChild(style);
     }
-    const width = Math.round(375 * (fontSize / 13));
+    // Ядро Argon: портрет 375px, праворуч колонка 115px (шкала руху / кнопки
+    // відпочинку). Панель тягнемо на обидва — до правого краю кнопок відпочинку;
+    // більший шрифт розширює її так само, як раніше розширював 375px
+    const width = Math.max(375 + 115, Math.round(375 * (fontSize / 13)) + 115);
     style.textContent = `
         .ability-menu,
         .ability-menu .collapsible-panel {
