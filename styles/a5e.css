@@ -310,3 +310,15 @@ body.game .ability-menu .ability-title,
 body.game .ability-menu .ability-code {
     color: var(--a5e-hud-accent-txt) !important;
 }
+
+/* ─── Стрілка згортання в заголовках панелі навичок ──────────────
+   Ядро Argon жорстко прописує їй font-family: "Font Awesome 6 Pro",
+   а Foundry постачає FA 7 Pro (v14) чи FA 5 Pro — шрифту з таким
+   ім'ям у системі немає, і браузер малює "тофу"-квадрат замість
+   стрілки. Беремо родину зі змінної самої Foundry, решта — запасні
+   варіанти для інших версій. Гліф \f13a (circle-chevron-down) є в усіх */
+body.game .extended-combat-hud .ability-menu ul.ability-toggle li::after {
+    font-family: var(--font-awesome, "Font Awesome 7 Pro"),
+                 "Font Awesome 7 Pro", "Font Awesome 6 Pro",
+                 "Font Awesome 5 Pro", "FontAwesome" !important;
+}
